@@ -1,0 +1,7 @@
+﻿@model IList<Demo.TreeView.Models.Loja>
+@foreach (var item in Model)
+{
+    <div id="drag-@item.ID"  ondragstart="drag(event)" data-id="@item.ID" class="lojas-conteudo draggable">
+        @item.Nome
+    </div>
+}

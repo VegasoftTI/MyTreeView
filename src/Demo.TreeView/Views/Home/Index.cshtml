@@ -1,0 +1,132 @@
+﻿@model IList<Demo.TreeView.Models.Gerente>
+@{
+    ViewBag.Title = "Home Page";
+}
+<link href="~/Content/themes/base/all.css" rel="stylesheet" />
+<link href="~/Content/jquery.tree/jquery.tree.css" rel="stylesheet" />
+<br />
+    <div class="alert alert-info fade in" role="alert">
+        <button type="button" class="close" data-dismiss="alert"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+        <strong>Olá Amigo!</strong><br />Selecione o(s) gerente(s), clique e arraste a loja até a div 'Selecionados'.
+    </div>
+<div class="row">
+
+    <div class="col-sm-5 bordas">
+        <h3 class="text-center">Gerentes</h3>
+        <hr />
+        <div class="" id="tree">
+            <ul>
+                @foreach (var item in Model.Where(d => d.PaiID == null).ToList())
+                {
+                    <li class="collapsed">
+                        <input class="chk-gerente" data-id="@item.ID" type="checkbox"><span> @item.Nome</span>
+                        <ul>
+                            @foreach (var subItem in Model.Where(d => d.PaiID == item.ID).ToList())
+                            {
+                                <li class="collapsed">
+                                    <input class="chk-gerente" data-id="@subItem.ID" type="checkbox"><span> @subItem.Nome</span>
+                                    <ul>
+                                        @foreach (var subSubItem in Model.Where(d => d.PaiID == subItem.ID).ToList())
+                                        {
+                                            <li class="collapsed">
+                                                <input data-id="@subSubItem.ID" class="chk-gerente" type="checkbox"><span> @subSubItem.Nome</span>
+                                            </li>
+
+                                        }
+                                    </ul>
+                                </li>
+
+                            }
+                        </ul>
+                    </li>
+                }
+            </ul>
+        </div>
+    </div>
+
+    <div class="col-sm-3 bordas">
+        <h3 class="text-center">Lojas</h3>
+        <hr />
+        <div id="divLojas">
+
+        </div>
+    </div>
+    <script>
+    
+    </script>
+
+    <div class="col-sm-3 bordas">
+        <h3 class="text-center">Selecionados</h3>
+        <hr />
+        <div id="divLojas-sel" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+    </div>
+</div>
+
+@section scripts {
+
+    <script src="~/Scripts/jquery-ui-1.11.1.js"></script>
+    <script src="~/Scripts/jquery.tree.js"></script>
+    <script>
+        function allowDrop(ev) {
+            ev.preventDefault();
+        }
+
+        function drag(ev) {
+            ev.dataTransfer.setData("text/html", ev.target.id);
+        }
+
+        function drop(ev) {
+            ev.preventDefault();
+            //$("#divLojas-sel").css({ "background-color": "#AA0000" });
+            var data = ev.dataTransfer.getData("text/html");
+            ev.target.appendChild(document.getElementById(data));
+        }
+
+        $(document).ready(function () {
+            $('#tree').tree({
+                onCheck: {
+                    node: 'expand'
+                },
+                onUncheck: {
+                    node: 'collapse'
+                }
+            });
+        });
+        gerentesID = '';
+
+        $('.chk-gerente').on('click', function () {
+            //fiz isso pois tem um delay para desencadear os checkeds dos nós filhos
+            setTimeout(function () {
+                verificar();
+            }, 300);
+
+
+        });
+
+        var verificar = function () {
+            $("#divLojas-sel").html("");
+            if ($('.chk-gerente:checked').length == 0) {
+                $('#divLojas').html('');
+            } else {
+                $('.chk-gerente:checked').each(function () {
+                    gerentesID += $(this).data("id") + ',';
+                });
+                gerentesID = gerentesID.substr(0, gerentesID.length - 1);
+                var urlGetLojas = "@Url.Action("Lojas")/";
+                $.ajax(
+                {
+                    type: 'POST',
+                    url: urlGetLojas,
+                    dataType: 'html',
+                    cache: false,
+                    async: true,
+                    data: { gerentes: gerentesID },
+                    success: function (data) {
+                        $('#divLojas').html(data);
+                    },
+                });
+            }
+            gerentesID = '';
+        };
+    </script>
+}
